@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "axios": "^0.19.2",
+    "classnames": "^2.2.6",
     "medium-editor": "^5.23.3",
     "primeicons": "^2.0.0",
     "primereact": "^4.2.0",
@@ -11,6 +13,7 @@
     "react-identicons": "^1.1.7",
     "react-medium-editor": "^1.8.1",
     "react-scripts": "2.1.8",
+    "react-transition-group": "^4.3.0",
     "reactstrap": "^8.0.0",
     "websocket": "^1.0.28"
   },

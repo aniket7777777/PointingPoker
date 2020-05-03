@@ -15,6 +15,13 @@ body {
     background: #eee;
 }
 
+.pointCard {
+    width: 125px;
+    height: 100px;
+    border: solid darkgrey;
+    font-size: 50px;
+}
+
 .account.account--photo {
     background: #6fb9fb;
 }
@@ -97,6 +104,7 @@ body {
     width: 64px;
     border-radius: 50%;
     overflow: hidden;
+    border: solid darkgray;
 }
 
 .account__name {
@@ -111,8 +119,9 @@ body {
     margin-top: 0;
     margin-bottom: 10px;
     color: #656262;
-    font-size: 11px;
+    font-size: 13px;
     line-height: 15px;
+    text-align: center;
 }
 
 .account__forgot-password {
@@ -263,6 +272,9 @@ body {
 
 .currentusers {
     margin: 20px 0;
+    display: flex;
+    flex-flow: column wrap;
+    height: 300px;
 }
 
 .currentuser {
@@ -272,7 +284,23 @@ body {
 .storyline {
     grid-area: header;
     background: white;
-    height: 150px;
+    padding: 5px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border: solid darkgray;
+}
+
+.avgPoint {
+    grid-area: avgPoint;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.avgPoint .p-card-body {
+    padding: unset;
+    padding-top: 1em;
 }
 
 .navbar-brand {
@@ -292,6 +320,8 @@ body {
     grid-area: footer;
     background: white;
     height: 100px;
+    position: sticky;
+    bottom: 0;
 }
 
 .container-fluid {
@@ -300,14 +330,13 @@ body {
 
 .main-content {
     display: grid;
-    grid-template-areas:    'header header'
-                            'left right'
-                            'footer footer';
+    grid-template-areas: 'header header header avgPoint' 'left left right right' 'footer footer footer footer';
     grid-gap: 10px;
     background-color: #e8ebec;
     padding: 10px;
+    grid-template-columns: auto auto 20% 20%;
+    grid-template-rows: 13% 50% auto;
 }
-
 
 .document-holder {
     grid-area: left;
@@ -318,11 +347,12 @@ body {
 .story-holder {
     grid-area: right;
     background: white;
+    overflow: scroll;
 }
 
-.story-holder ul {
+/*.story-holder ul {
     padding: 9px;
     list-style: none;
     font-size: 12px;
     color: #4e4e4e;
-}
+}*/
