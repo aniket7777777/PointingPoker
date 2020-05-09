@@ -74,7 +74,7 @@ body {
 
 .account__card {
     background-color: #fff;
-    margin: 30px auto auto auto;
+    margin: 10px auto auto auto;
     padding: 50px 60px;
     width: 500px;
 }
@@ -281,6 +281,27 @@ body {
     margin-bottom: 10px;
 }
 
+.storyControls {
+    display: table-cell;
+    grid-area: header-control;
+    background-color: white;
+    /*padding: 2px;*/
+}
+
+.storyControls button {
+    margin: 5px;
+    vertical-align: middle;
+}
+
+.storyControls input {
+    margin: 5px;
+    vertical-align: middle;
+}
+
+.storyControls:first-child {
+    display: inline-block;
+}
+
 .storyline {
     grid-area: header;
     background: white;
@@ -296,11 +317,8 @@ body {
     position: sticky;
     top: 0;
     z-index: 1;
-}
-
-.avgPoint .p-card-body {
-    padding: unset;
-    padding-top: 1em;
+    background-color: white;
+    padding: 2px;
 }
 
 .navbar-brand {
@@ -330,12 +348,20 @@ body {
 
 .main-content {
     display: grid;
-    grid-template-areas: 'header header header avgPoint' 'left left right right' 'footer footer footer footer';
-    grid-gap: 10px;
+    grid-template-areas: 'header-control header-control header-control header-control' 'header header header avgPoint' 'left left right right' 'footer footer footer footer';
+    grid-gap: 5px;
     background-color: #e8ebec;
-    padding: 10px;
+    padding: 5px;
     grid-template-columns: auto auto 20% 20%;
-    grid-template-rows: 13% 50% auto;
+    grid-template-rows: 4.5% 7% 50% auto;
+}
+
+.main-content > div {
+    border: solid darkgray;
+}
+
+.main-content > span {
+    border: solid darkgray;
 }
 
 .document-holder {

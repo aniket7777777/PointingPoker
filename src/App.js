@@ -4,11 +4,13 @@ import Identicon from 'react-identicons';
 import {SelectButton} from 'primereact/selectbutton';
 import {Message} from 'primereact/message';
 import {DataTable} from 'primereact/datatable';
-import {Card} from 'primereact/card';
 import {FileUpload} from 'primereact/fileupload';
 import {RadioButton} from 'primereact/radiobutton';
 import {Growl} from 'primereact/growl';
 import {Dialog} from 'primereact/dialog';
+import {InputNumber} from 'primereact/inputnumber';
+
+import io from 'socket.io-client'
 
 import 'primereact/resources/themes/nova-light/theme.css';
 import 'primereact/resources/primereact.min.css';
@@ -28,7 +30,10 @@ import {Column} from "primereact/column";
 import {Button} from "primereact/button";
 import {InputText} from "primereact/inputtext";
 
-const client = new WebSocket('ws://127.0.0.1:8080/backend');
+// const client = new WebSocket('ws://127.0.0.1:5000');
+let uri = 'http://localhost:5000';
+const socket = io(uri);
+let uploadUrl = uri + "/upload";
 const contentDefaultMessage = "Start writing your document here";
 
 class App extends Component {
@@ -39,8 +44,16 @@ class App extends Component {
         this.export = this.export.bind(this);
         this.addNew = this.addNew.bind(this);
         this.save = this.save.bind(this);
+        this.onUpload = this.onUpload.bind(this);
+        this.onUploadError = this.onUploadError.bind(this);
+        this.onBeforeUpload = this.onBeforeUpload.bind(this);
+        this.selectPreviousStory = this.selectPreviousStory.bind(this);
+        this.selectNextStory = this.selectNextStory.bind(this);
+        this.handleRoomId = this.handleRoomId.bind(this);
+        this.handleUsername = this.handleUsername.bind(this);
 
         this.state = {
+            loggedIn: false,
             currentUsers: [
                 {
                     username: 'Aniket',
@@ -55,7 +68,7 @@ class App extends Component {
                     pointsGiven: true
                 }],
             userActivity: [],
-            username: null,
+            username: '',
             text: '',
             points: [{label: '0', key: '0'}, {label: '1', key: '1'}, {label: '2', key: '2'}, {
                 label: '3',
@@ -64,7 +77,8 @@ class App extends Component {
                 label: '?',
                 key: '?'
             }, {label: 'Pass', key: 'Pass'}],
-            selectedPoint: ''
+            selectedPoint: '',
+            uploaded: false
         };
         for (var i = 0; i < 8; i++) {
             this.state.currentUsers.push({
@@ -77,38 +91,42 @@ class App extends Component {
     }
 
     componentDidMount() {
+        this.setSocketListeners()
         let storiesData = this.storyService.getStories();
         this.setState({stories: storiesData})
+        if (storiesData.length > 1) {
+            this.setState({selectedStory: storiesData[0]});
+        }
     }
 
     logInUser = () => {
-        const username = this.username.value;
-        if (username.trim()) {
-            const data = {
-                username
-            };
-            this.setState({
-                ...data
-            }, () => {
-                client.send(JSON.stringify({
-                    ...data,
-                    type: "userevent"
-                }));
-            });
-        }
+        this.setState({loggedIn: true});
     }
 
     /* When content changes, we send the
   current content of the editor to the server. */
     onEditorStateChange = (text) => {
-        client.send(JSON.stringify({
+        /*client.send(JSON.stringify({
             type: "contentchange",
             username: this.state.username,
             content: text
-        }));
+        }));*/
     };
 
+    setSocketListeners() {
+        socket.on('message', (data) => {
+            console.log(data.message)
+        });
+
+        socket.on('greet', (data) => {
+            console.log(data)
+        })
+    }
+
     componentWillMount() {
+        /*client.onconnect = () => {
+            console.log('WebSocket Client Connected');
+        };
         client.onopen = () => {
             console.log('WebSocket Client Connected');
         };
@@ -124,11 +142,31 @@ class App extends Component {
             this.setState({
                 ...stateToChange
             });
-        };
+        };*/
     }
 
     onUpload(event) {
         this.growl.show({severity: 'info', summary: 'Success', detail: 'File Uploaded'});
+        this.setState({uploaded: true})
+        console.log(event);
+    }
+
+    onBeforeUpload(event, url) {
+        event.xhr.open("POST", uploadUrl)
+        event.xhr.setRequestHeader("username", this.state.username)
+        console.log(event);
+    }
+
+    onUploadError(event) {
+        this.growl.show({severity: 'error', summary: 'Error Message', detail: 'Upload failed'});
+    }
+
+    handleUsername(event) {
+        this.setState({username: event.target.value})
+    }
+
+    handleRoomId(event) {
+        this.setState({roomId: event.target.value})
     }
 
     showLoginSection = () => (
@@ -137,20 +175,28 @@ class App extends Component {
                 <div className="account__card">
                     <div className="account__profile">
                         <Identicon className="account__avatar" size={64} string="randomness"/>
-                        <p className="account__name">Hello, user!</p>
-                        <p className="account__sub">Enter the code to join the dashboard</p>
+                        <p className="account__name">Hello </p><input placeholder="Enter Your Name" name="username"
+                                                                      value={this.state.username}
+                                                                      onChange={this.handleUsername}
+                                                                      className="form-control"/>
                     </div>
-                    <input name="username" ref={(input) => {
-                        this.username = input;
-                    }} className="form-control"/>
+                </div>
+                <div className="account__card">
+                    <div className="account__profile">
+                        <label><b>Enter the code to join the dashboard</b></label>
+                    </div>
+                    <input name="code" value={this.state.roomId}
+                           onChange={this.handleRoomId}
+                           className="form-control"/>
                     <button type="button" onClick={() => this.logInUser()}
                             className="btn btn-primary account__btn">Join
                     </button>
                 </div>
-                <br/>
-                <p style={{textAlign: 'center', background: 'white'}}>OR</p>
+                <p style={{textAlign: 'center', background: 'white', marginTop: '10px'}}>OR</p>
                 <div className="account__card">
-                    <p className="account__sub">Create dashboard</p>
+                    <div className="account__profile">
+                        <label><b>Create dashboard</b></label>
+                    </div>
                     <RadioButton value="upload" name="create" onChange={(e) => this.setState({selectedOption: e.value})}
                                  checked={this.state.selectedOption === 'upload'}/><label
                     className="p-radiobutton-label">Upload File</label>
@@ -160,15 +206,23 @@ class App extends Component {
                     className="p-radiobutton-label">Enter Stories
                     Manually</label>
                     <br/>
-                    {this.state.selectedOption === 'upload' ?
-                        <FileUpload name="upload" url="./upload" onUpload={this.onUpload}></FileUpload> : ''}
-                    <button type="button" onClick={() => this.logInUser()}
-                            className="btn btn-primary account__btn">Create
+                    {this.isUsernameEntered() && this.state.selectedOption === 'upload' ?
+                        <FileUpload name="upload" url={uploadUrl} onBeforeSend={this.onBeforeUpload}
+                                    onUpload={this.onUpload} onError={this.onUploadError}/> : ''}
+                    <br/>
+                    <button
+                        type="button" onClick={() => this.logInUser()}
+                        disabled={!(this.isUsernameEntered() && this.state.uploaded || this.state.selectedOption === 'manual')}
+                        className="btn btn-primary account__btn">Create
                     </button>
                 </div>
             </div>
         </div>
     )
+
+    isUsernameEntered() {
+        return (this.state.username !== null && this.state.username.length !== 0);
+    }
 
     cardTemplate(point) {
         return (
@@ -180,17 +234,45 @@ class App extends Component {
 
     showStoryLine(selectedStory) {
         if (selectedStory) {
-            return "Issue : " + selectedStory.Summary
-
+            return selectedStory.IssueKey + " : " + selectedStory.Summary
         }
     }
 
+    selectPreviousStory() {
+        if (this.state.selectedStory) {
+            let index = this.state.stories.findIndex(x => x.IssueKey === this.state.selectedStory.IssueKey);
+            if (index > 0) {
+                this.setState({selectedStory: this.state.stories[index - 1]})
+            }
+        }
+    }
+
+    selectNextStory() {
+        if (this.state.selectedStory) {
+            let index = this.state.stories.findIndex(x => x.IssueKey === this.state.selectedStory.IssueKey);
+            if (index < this.state.stories.length - 1) {
+                this.setState({selectedStory: this.state.stories[index + 1]})
+            }
+        }
+    }
+
+    showStoryControls = () => (
+        <React.Fragment>
+            &nbsp;<span style={{'backgroundColor': 'burlywood'}}> Access code: 123456</span>
+            <Button label="Previous Story" icon="pi pi-step-backward-alt" iconPos="left"
+                    onClick={this.selectPreviousStory}/>
+            <Button label="Next Story" icon="pi pi-step-forward-alt" iconPos="right" onClick={this.selectNextStory}/>
+            <Button label="Flip" icon="pi pi-refresh" className="p-button-warning" iconPos="right"/>
+            <InputNumber value={this.state.value1} onChange={(e) => this.setState({value1: e.value})}/>
+            <Button label="Enter Final Points" className="p-button-success"/>
+        </React.Fragment>
+    )
+
     showAvgPoint = () => (
-        <Card title="Avg Point" style={{textAlign: 'center', height: '100%'}}>
-            <h1 style={{textAlign: 'center'}}>
-                {this.calculateAvgPoint()}
-            </h1>
-        </Card>
+        <div style={{textAlign: 'center', height: '100%'}}>
+            <h5>Avg Point</h5>
+            <h3>{this.calculateAvgPoint()}</h3>
+        </div>
     )
 
     calculateAvgPoint() {
@@ -209,6 +291,7 @@ class App extends Component {
 
     showEditorSection = () => (
         <div className="main-content">
+            <span className="storyControls">{this.showStoryControls(this.state.selectedStory)}</span>
             <div className="storyline">{this.showStoryLine(this.state.selectedStory)}</div>
             <div className="avgPoint">{this.showAvgPoint()}</div>
             <div className="document-holder">
@@ -336,17 +419,11 @@ class App extends Component {
 
 
     render() {
-        const {
-            username
-        } = this.state;
         return (
             <React.Fragment>
-                <Navbar color="light" light>
-                    <NavbarBrand href="/">Planning Pointer</NavbarBrand>
-                </Navbar>
+                <Growl ref={(el) => this.growl = el}/>
                 <div className="container-fluid">
-                    {/* { this.showEditorSection() */}
-                    {username ? this.showEditorSection() : this.showLoginSection()}
+                    {this.state.loggedIn ? this.showEditorSection() : this.showLoginSection()}
                 </div>
             </React.Fragment>
         );
