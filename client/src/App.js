@@ -28,7 +28,7 @@ const socketUri = 'ws://localhost:5000';
 let uri = 'http://localhost:5000';
 // const socket = io(uri);
 // const socket = io(uri);
-const socket = io.connect(socketUri, {transports: ['websocket']});
+const socket = io.connect(socketUri, {transports: ['websocket'], path: '/backend'});
 // const socket = openSocket(uri);
 let uploadUrl = uri + "/upload";
 

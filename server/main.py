@@ -17,7 +17,7 @@ eventlet.monkey_patch()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'vnkdjnfjknfl1232#'
-socketio = SocketIO(app, cors_allowed_origins=[], logger=True, engineio_logger=True)
+socketio = SocketIO(app, cors_allowed_origins=[], logger=True, engineio_logger=True, path='backend')
 CORS(app)
 pointingData = {}
 current_milli_time = lambda: int(round(time.time() * 1000))
