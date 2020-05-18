@@ -1,7 +1,0 @@
-applications:
-  - name: wesocket-ui
-    instances: 1
-    path: ./build
-    buildpack: staticfile_buildpack
-    memory: 64M
-    disk_quota: 32M

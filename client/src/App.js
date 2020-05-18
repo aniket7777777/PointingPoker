@@ -9,6 +9,7 @@ import {RadioButton} from 'primereact/radiobutton';
 import {Growl} from 'primereact/growl';
 import {Dialog} from 'primereact/dialog';
 import {InputNumber} from 'primereact/inputnumber';
+import {ProgressSpinner} from 'primereact/progressspinner';
 
 import io from 'socket.io-client'
 
@@ -16,31 +17,25 @@ import 'primereact/resources/themes/nova-light/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 
-import {
-    Navbar,
-    NavbarBrand,
-    UncontrolledTooltip
-} from 'reactstrap';
-import Editor from 'react-medium-editor';
 import 'medium-editor/dist/css/medium-editor.css';
 import 'medium-editor/dist/css/themes/default.css';
 import './App.css';
-import {StoryService} from "./StoryService";
 import {Column} from "primereact/column";
 import {Button} from "primereact/button";
 import {InputText} from "primereact/inputtext";
 
-// const client = new WebSocket('ws://127.0.0.1:5000');
+const socketUri = 'ws://localhost:5000';
 let uri = 'http://localhost:5000';
-const socket = io(uri);
+// const socket = io(uri);
+// const socket = io(uri);
+const socket = io.connect(socketUri, {transports: ['websocket']});
+// const socket = openSocket(uri);
 let uploadUrl = uri + "/upload";
-const contentDefaultMessage = "Start writing your document here";
 
 class App extends Component {
     constructor(props) {
         // super()
         super(props);
-        this.storyService = new StoryService();
         this.export = this.export.bind(this);
         this.addNew = this.addNew.bind(this);
         this.save = this.save.bind(this);
@@ -51,10 +46,18 @@ class App extends Component {
         this.selectNextStory = this.selectNextStory.bind(this);
         this.handleRoomId = this.handleRoomId.bind(this);
         this.handleUsername = this.handleUsername.bind(this);
+        this.isStoryPointed = this.isStoryPointed.bind(this);
+        this.flipPoints = this.flipPoints.bind(this);
+        this.calculateAvgPoint = this.calculateAvgPoint.bind(this);
+        this.storyFinalPoints = this.storyFinalPoints.bind(this);
+        this.isAdmin = this.isAdmin.bind(this);
+        this.logInUser = this.logInUser.bind(this);
 
         this.state = {
             loggedIn: false,
-            currentUsers: [
+            currentUsers: [],
+            stories: [],
+            /*currentUsers: [
                 {
                     username: 'Aniket',
                     self: true,
@@ -67,7 +70,7 @@ class App extends Component {
                     point: '2',
                     pointsGiven: true
                 }],
-            userActivity: [],
+            */userActivity: [],
             username: '',
             text: '',
             points: [{label: '0', key: '0'}, {label: '1', key: '1'}, {label: '2', key: '2'}, {
@@ -78,40 +81,39 @@ class App extends Component {
                 key: '?'
             }, {label: 'Pass', key: 'Pass'}],
             selectedPoint: '',
-            uploaded: false
+            uploaded: false,
+            progressSpinner: false,
+            selectedStory: {},
+            finalPoints: null
         };
-        for (var i = 0; i < 8; i++) {
+        /*for (var i = 0; i < 8; i++) {
             this.state.currentUsers.push({
                 username: 'Aniket' + i,
                 self: true,
                 point: '5',
                 pointsGiven: true
             });
-        }
+        }*/
     }
 
     componentDidMount() {
         this.setSocketListeners()
-        let storiesData = this.storyService.getStories();
+        /*let storiesData = this.storyService.getStories();
         this.setState({stories: storiesData})
         if (storiesData.length > 1) {
             this.setState({selectedStory: storiesData[0]});
-        }
+        }*/
     }
 
     logInUser = () => {
+        if (this.state.selectedOption === 'manual') {
+            socket.emit('createManually', {username: this.state.username});
+        } else {
+            socket.emit('login', {username: this.state.username, roomId: this.state.roomId});
+        }
         this.setState({loggedIn: true});
     }
 
-    /* When content changes, we send the
-  current content of the editor to the server. */
-    onEditorStateChange = (text) => {
-        /*client.send(JSON.stringify({
-            type: "contentchange",
-            username: this.state.username,
-            content: text
-        }));*/
-    };
 
     setSocketListeners() {
         socket.on('message', (data) => {
@@ -119,8 +121,37 @@ class App extends Component {
         });
 
         socket.on('greet', (data) => {
-            console.log(data)
+            this.growl.show({severity: 'info', summary: data, detail: ''});
         })
+
+        socket.on('pointingData', (data) => {
+            console.log(data);
+            let pointingData = JSON.parse(data);
+            this.setState({
+                stories: Object.values(pointingData['_stories']),
+                currentUsers: Object.values(pointingData['_users']),
+                selectedStory: pointingData['_selected_story'],
+                roomId: pointingData['_roomId']
+            });
+        })
+
+        socket.on('selectStoryResp', (data) => {
+            this.setState({
+                selectedStory: data,
+                progressSpinner: false
+            });
+        })
+
+        socket.on('publishUsers', (data) => {
+            console.log("publishUsers", data);
+            this.setState({currentUsers: Object.values(JSON.parse(data))});
+        })
+
+        socket.on('publishStories', (data) => {
+            console.log("publishStories", data);
+            this.setState({stories: Object.values(JSON.parse(data))});
+        })
+
     }
 
     componentWillMount() {
@@ -148,7 +179,7 @@ class App extends Component {
     onUpload(event) {
         this.growl.show({severity: 'info', summary: 'Success', detail: 'File Uploaded'});
         this.setState({uploaded: true})
-        console.log(event);
+        this.setState({roomId: event.xhr.response})
     }
 
     onBeforeUpload(event, url) {
@@ -185,10 +216,11 @@ class App extends Component {
                     <div className="account__profile">
                         <label><b>Enter the code to join the dashboard</b></label>
                     </div>
-                    <input name="code" value={this.state.roomId}
+                    <input name="code"
                            onChange={this.handleRoomId}
                            className="form-control"/>
                     <button type="button" onClick={() => this.logInUser()}
+                            disabled={!(this.isUsernameEntered() && this.isRoomIdEntered())}
                             className="btn btn-primary account__btn">Join
                     </button>
                 </div>
@@ -197,11 +229,13 @@ class App extends Component {
                     <div className="account__profile">
                         <label><b>Create dashboard</b></label>
                     </div>
-                    <RadioButton value="upload" name="create" onChange={(e) => this.setState({selectedOption: e.value})}
+                    <RadioButton value="upload" name="create"
+                                 onChange={(e) => this.setState({selectedOption: e.value})}
                                  checked={this.state.selectedOption === 'upload'}/><label
                     className="p-radiobutton-label">Upload File</label>
                     <br/>
-                    <RadioButton value="manual" name="create" onChange={(e) => this.setState({selectedOption: e.value})}
+                    <RadioButton value="manual" name="create"
+                                 onChange={(e) => this.setState({selectedOption: e.value})}
                                  checked={this.state.selectedOption === 'manual'}/><label
                     className="p-radiobutton-label">Enter Stories
                     Manually</label>
@@ -212,7 +246,7 @@ class App extends Component {
                     <br/>
                     <button
                         type="button" onClick={() => this.logInUser()}
-                        disabled={!(this.isUsernameEntered() && this.state.uploaded || this.state.selectedOption === 'manual')}
+                        disabled={!(this.isUsernameEntered() && (this.state.uploaded || this.state.selectedOption === 'manual'))}
                         className="btn btn-primary account__btn">Create
                     </button>
                 </div>
@@ -224,6 +258,10 @@ class App extends Component {
         return (this.state.username !== null && this.state.username.length !== 0);
     }
 
+    isRoomIdEntered() {
+        return (this.state.roomId !== null && this.state.roomId !== undefined && this.state.roomId.length !== 0);
+    }
+
     cardTemplate(point) {
         return (
             <div className="pointCard">
@@ -233,38 +271,71 @@ class App extends Component {
     }
 
     showStoryLine(selectedStory) {
+        if (this.state.progressSpinner) {
+            return (<ProgressSpinner style={{width: '50px', height: '50px'}} strokeWidth="8" fill="#EEEEEE"
+                                     animationDuration=".5s"/>)
+        }
         if (selectedStory) {
-            return selectedStory.IssueKey + " : " + selectedStory.Summary
+            return selectedStory["Key"] + " : " + selectedStory.Summary
         }
     }
 
     selectPreviousStory() {
         if (this.state.selectedStory) {
-            let index = this.state.stories.findIndex(x => x.IssueKey === this.state.selectedStory.IssueKey);
+            let index = this.state.stories.findIndex(x => x["Key"] === this.state.selectedStory["Key"]);
             if (index > 0) {
-                this.setState({selectedStory: this.state.stories[index - 1]})
+                this.selectStory(this.state.stories[index - 1]);
             }
         }
     }
 
     selectNextStory() {
         if (this.state.selectedStory) {
-            let index = this.state.stories.findIndex(x => x.IssueKey === this.state.selectedStory.IssueKey);
+            let index = this.state.stories.findIndex(x => x["Key"] === this.state.selectedStory["Key"]);
             if (index < this.state.stories.length - 1) {
-                this.setState({selectedStory: this.state.stories[index + 1]})
+                this.selectStory(this.state.stories[index + 1]);
             }
         }
     }
 
+    flipPoints() {
+        socket.emit('flip', {
+            roomId: this.state.roomId,
+            username: this.state.username
+        })
+    }
+
+    storyFinalPoints() {
+        socket.emit('enterFinalPoints', {
+            roomId: this.state.roomId,
+            username: this.state.username,
+            points: this.state.finalPoints,
+            "Key": this.state.selectedStory["Key"]
+        });
+        this.setState({
+            finalPoints: null
+        });
+    }
+
+    isAdmin() {
+        let users = this.state.currentUsers.filter(user => user._name === this.state.username);
+        if (users.length !== 0) {
+            return users[0]._isAdmin;
+        }
+        return false;
+    }
+
     showStoryControls = () => (
         <React.Fragment>
-            &nbsp;<span style={{'backgroundColor': 'burlywood'}}> Access code: 123456</span>
             <Button label="Previous Story" icon="pi pi-step-backward-alt" iconPos="left"
                     onClick={this.selectPreviousStory}/>
-            <Button label="Next Story" icon="pi pi-step-forward-alt" iconPos="right" onClick={this.selectNextStory}/>
-            <Button label="Flip" icon="pi pi-refresh" className="p-button-warning" iconPos="right"/>
-            <InputNumber value={this.state.value1} onChange={(e) => this.setState({value1: e.value})}/>
-            <Button label="Enter Final Points" className="p-button-success"/>
+            <Button label="Next Story" icon="pi pi-step-forward-alt" iconPos="right"
+                    onClick={this.selectNextStory}/>
+            <Button label="Flip" icon="pi pi-refresh" className="p-button-warning" iconPos="right"
+                    onClick={this.flipPoints}/>
+            <InputNumber size={5} value={this.state.finalPoints}
+                         onChange={(e) => this.setState({finalPoints: e.value})}/>
+            <Button label="Enter Final Points" className="p-button-success" onClick={this.storyFinalPoints}/>
         </React.Fragment>
     )
 
@@ -276,38 +347,67 @@ class App extends Component {
     )
 
     calculateAvgPoint() {
+        if (!this.state.selectedStory || !this.state.selectedStory["Key"])
+            return 0;
         let sum = 0;
+        let count = 0;
         this.state.currentUsers.forEach(user => {
-            let parsed = parseInt(user.point, 10);
-            sum += parsed ? parsed : 0;
+            if (user._points[this.state.selectedStory["Key"]] != null) {
+                let parsed = parseInt(user._points[this.state.selectedStory["Key"]]._point, 10);
+                if (parsed) {
+                    sum += parsed;
+                    count++;
+                }
+            }
         })
-        let length = this.state.currentUsers.length;
-        if (length > 0)
-            return sum / length
-        else
-            return '-'
+        return count !== 0 ? (sum / count).toFixed(1) : 0;
     }
 
+    isEmpty(o) {
+        if (o === undefined || o === null)
+            return true;
+        return Object.keys(o).length === 0
+    }
+
+    isStoryPointed(user) {
+        if (this.state.selectedStory) {
+            if (!this.isEmpty(user._points) && user._points[this.state.selectedStory['Key']]) {
+                return user._points[this.state.selectedStory['Key']]._isPointed;
+            }
+        }
+        return false
+    }
+
+    displayPoints(user) {
+        if (this.state.selectedStory) {
+            return user._points[this.state.selectedStory["Key"]]._point;
+        }
+    }
 
     showEditorSection = () => (
         <div className="main-content">
-            <span className="storyControls">{this.showStoryControls(this.state.selectedStory)}</span>
+            <span className="storyControls">
+                            &nbsp;<span
+                style={{'backgroundColor': 'burlywood'}}> Access code: {this.state.roomId}</span>
+                {this.isAdmin() ? this.showStoryControls(this.state.selectedStory) : ''}</span>
             <div className="storyline">{this.showStoryLine(this.state.selectedStory)}</div>
             <div className="avgPoint">{this.showAvgPoint()}</div>
             <div className="document-holder">
                 <div className="currentusers">
                     {this.state.currentUsers.map(user => (
-                        <div className="currentuser" key={user.username}>
+                        <div className="currentuser" key={user._name}>
                             <div style={{display: 'inline-flex'}}>
-                                <div id={user.username} className="userInfo" key={user.username}>
-                                    <Identicon className="account__avatar" style={{backgroundColor: user.randomcolor}}
-                                               size={40} string={user.username}/>
+                                <div id={user.username} className="userInfo" key={user._name}>
+                                    <Identicon className="account__avatar"
+                                               style={{backgroundColor: user.randomcolor}}
+                                               size={40} string={user._name}/>
                                 </div>
-                                <div>{user.pointsGiven ?
+                                <div>{this.isStoryPointed(user) ?
                                     <Message severity="success"
-                                             text={user.point}></Message> : ''}</div>
+                                             text={this.displayPoints(user)}></Message> : ''}</div>
                             </div>
-                            <div>{user.username}</div>
+                            <div
+                                className={(user._name === this.state.username ? 'highlight' : '')}>{user._name}</div>
                         </div>
                     ))}
                 </div>
@@ -327,19 +427,30 @@ class App extends Component {
             </div>
             <div className="footer">
                 <SelectButton value={this.state.selectedPoint} options={this.state.points}
-                              onChange={e => this.setState({selectedPoint: e.value})} itemTemplate={this.cardTemplate}
+                              onChange={e => this.selectPoint(e.value)} itemTemplate={this.cardTemplate}
                               optionLabel="label" optionValue="key"/>
             </div>
         </div>
     )
 
-    export() {
+    selectPoint(value) {
+        this.setState({selectedPoint: value})
+        socket.emit('selectPoint', {
+            roomId: this.state.roomId,
+            username: this.state.username,
+            'Key': this.state.selectedStory['Key'],
+            point: value
+        })
+    }
+
+    export
+    () {
         this.dt.exportCSV();
     }
 
     addNew() {
         this.setState({
-            story: {IssueKey: '', Summary: '', StoryPoints: ''},
+            story: {"Key": '', Summary: '', StoryPoints: ''},
             displayDialog: true
         });
     }
@@ -351,14 +462,38 @@ class App extends Component {
     }
 
     save() {
-        let stories = [...this.state.stories];
-        stories.push(this.state.story);
-        this.setState({stories: stories, selectedStory: null, story: null, displayDialog: false});
+        if (!this.isAdmin()) {
+            return
+        }
+        socket.emit('addStory', {
+            roomId: this.state.roomId,
+            username: this.state.username,
+            story: this.state.story
+        });
+        this.setState({
+            story: {},
+            displayDialog: false
+        });
+    }
+
+    selectStory(value) {
+        if (!this.isAdmin()) {
+            return
+        }
+        this.setState({
+            progressSpinner: true
+        });
+        socket.emit('selectStory', {
+            roomId: this.state.roomId,
+            username: this.state.username,
+            'Key': value['Key']
+        })
     }
 
     showStoryTableSection() {
-        let header = <div style={{textAlign: 'left'}}><Button type="button" icon="pi pi-external-link" iconPos="left"
-                                                              label="CSV" onClick={this.export}></Button></div>;
+        let header = <div style={{textAlign: 'left'}}><Button type="button" icon="pi pi-external-link"
+                                                              iconPos="left"
+                                                              label="CSV" onClick={this.export}/></div>;
         let footer = <div className="p-clearfix" style={{width: '100%'}}>
             <Button style={{float: 'left'}} label="Add" icon="pi pi-plus" onClick={this.addNew}/>
         </div>;
@@ -368,14 +503,14 @@ class App extends Component {
         return (
             <div>
                 <DataTable value={this.state.stories} selectionMode="single" selection={this.state.selectedStory}
-                           onSelectionChange={e => this.setState({selectedStory: e.value})}
-                           header={header} footer={footer}
+                           onSelectionChange={e => this.selectStory(e.value)}
+                           header={this.isAdmin() ? header : ''} footer={this.isAdmin() ? footer : ''}
                            ref={(el) => {
                                this.dt = el;
                            }} resizableColumns={true}>
-                    <Column field="IssueKey" header="Issue Key" style={{width: '10%'}}/>
+                    <Column field="Key" header="Key" style={{width: '10%'}}/>
                     <Column field="Summary" header="Summary" style={{width: '70%'}}/>
-                    <Column field="StoryPoints" header="Story Points" style={{width: '20%'}}/>
+                    <Column field="Story Points" header="Story Points" style={{width: '20%'}}/>
                 </DataTable>
 
                 <Dialog visible={this.state.displayDialog} width="300px" header="Story Details" modal={true}
@@ -384,15 +519,16 @@ class App extends Component {
                         this.state.story &&
 
                         <div className="p-grid p-fluid">
-                            <div className="p-col-4" style={{padding: '.75em'}}><label htmlFor="IssueKey">Issue
+                            <div className="p-col-4" style={{padding: '.75em'}}><label htmlFor="Key">Issue
                                 Key</label></div>
                             <div className="p-col-8" style={{padding: '.5em'}}>
-                                <InputText id="IssueKey" onChange={(e) => {
-                                    this.updateProperty('IssueKey', e.target.value)
-                                }} value={this.state.story.IssueKey}/>
+                                <InputText id="Key" onChange={(e) => {
+                                    this.updateProperty('Key', e.target.value)
+                                }} value={this.state.story["Key"]}/>
                             </div>
 
-                            <div className="p-col-4" style={{padding: '.75em'}}><label htmlFor="Summary">Summary</label>
+                            <div className="p-col-4" style={{padding: '.75em'}}><label
+                                htmlFor="Summary">Summary</label>
                             </div>
                             <div className="p-col-8" style={{padding: '.5em'}}>
                                 <InputText id="Summary" onChange={(e) => {
