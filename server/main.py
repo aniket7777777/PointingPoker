@@ -1,3 +1,7 @@
+from gevent import monkey
+
+monkey.patch_all()
+
 import copy
 import csv
 import eventlet
@@ -8,9 +12,9 @@ from Pointing import Pointing
 from User import User
 from flask import Flask, render_template, request, json
 from flask_cors import CORS
-from flask_socketio import SocketIO, join_room
+from flask_socketio import SocketIO, join_room, close_room
 
-eventlet.monkey_patch()
+# eventlet.monkey_patch()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'vnkdjnfjknfl1232#'
@@ -30,6 +34,16 @@ def sessions():
 def create_manually(data):
     room_id = setup_pointing_data({}, data['username'])
     on_login({'roomId': room_id, 'username': data['username']})
+
+
+@socketio.on('exitRoom')
+def on_exit(data):
+    room_id_ = data['roomId']
+    pointing = pointingData[data['roomId']]
+    if pointing['public'].users[data['username']].isAdmin is True:
+        close_room(room_id_)
+        pointingData.pop(data['roomId'])
+        print("data cleared for room: ", room_id_)
 
 
 @socketio.on('login')
@@ -145,6 +159,6 @@ def setup_pointing_data(stories, username):
 
 if __name__ == '__main__':
     if cf_port is None:
-        socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+        socketio.run(app, debug=True)
     else:
         socketio.run(app, host='0.0.0.0', port=int(cf_port), debug=True)

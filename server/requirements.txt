@@ -1,8 +1,9 @@
-Flask
+Flask~=1.1.2
 Flask-Cors
 Flask-SocketIO
 gevent-websocket
-eventlet
+eventlet~=0.25.2
 python-engineio
 python-socketio
 Werkzeug
+gevent~=20.5.0

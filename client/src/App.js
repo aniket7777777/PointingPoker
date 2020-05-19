@@ -23,10 +23,10 @@ import {Column} from "primereact/column";
 import {Button} from "primereact/button";
 import {InputText} from "primereact/inputtext";
 
-const socketUri = 'wss://';
-// const socketUri = 'ws://localhost:5000';
-let uri = '/file';
-// let uri = 'http://localhost:5000/file';
+// const socketUri = 'wss://';
+const socketUri = 'ws://localhost:5000';
+// let uri = '/file';
+let uri = 'http://localhost:5000/file';
 // const socket = io(uri);
 const socket = io.connect(socketUri, {transports: ['websocket'], path: '/backend'});
 let uploadUrl = uri + "/upload";
@@ -51,6 +51,7 @@ class App extends Component {
         this.storyFinalPoints = this.storyFinalPoints.bind(this);
         this.isAdmin = this.isAdmin.bind(this);
         this.logInUser = this.logInUser.bind(this);
+        this.exitRoom = this.exitRoom.bind(this);
 
         this.state = {
             loggedIn: false,
@@ -181,12 +182,11 @@ class App extends Component {
         this.setState({roomId: event.xhr.response})
     }
 
-    getCookieVal(cookiename)
-    {
+    getCookieVal(cookiename) {
         // Get name followed by anything except a semicolon
-        var cookiestring=RegExp(cookiename+"=[^;]+").exec(document.cookie);
+        var cookiestring = RegExp(cookiename + "=[^;]+").exec(document.cookie);
         // Return everything after the equal sign, or an empty string if the cookie name not found
-        return decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./,"") : "");
+        return decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./, "") : "");
     }
 
     onBeforeUpload(event, url) {
@@ -325,6 +325,16 @@ class App extends Component {
         });
     }
 
+    exitRoom() {
+        socket.emit('exitRoom', {
+            roomId: this.state.roomId,
+            username: this.state.username
+        });
+        this.setState({
+            loggedIn: false
+        });
+    }
+
     isAdmin() {
         let users = this.state.currentUsers.filter(user => user._name === this.state.username);
         if (users.length !== 0) {
@@ -344,6 +354,7 @@ class App extends Component {
             <InputNumber size={5} value={this.state.finalPoints}
                          onChange={(e) => this.setState({finalPoints: e.value})}/>
             <Button label="Enter Final Points" className="p-button-success" onClick={this.storyFinalPoints}/>
+            <Button label="Exit" icon="pi pi-sign-out" className="p-button-danger" onClick={this.exitRoom}/>
         </React.Fragment>
     )
 
