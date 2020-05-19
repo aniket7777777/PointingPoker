@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-// import { w3cwebsocket as W3CWebSocket } from "websocket";
 import Identicon from 'react-identicons';
 import {SelectButton} from 'primereact/selectbutton';
 import {Message} from 'primereact/message';
@@ -24,12 +23,12 @@ import {Column} from "primereact/column";
 import {Button} from "primereact/button";
 import {InputText} from "primereact/inputtext";
 
-const socketUri = 'ws://localhost:5000';
-let uri = 'http://localhost:5000';
-// const socket = io(uri);
+const socketUri = 'wss://';
+// const socketUri = 'ws://localhost:5000';
+let uri = '/file';
+// let uri = 'http://localhost:5000/file';
 // const socket = io(uri);
 const socket = io.connect(socketUri, {transports: ['websocket'], path: '/backend'});
-// const socket = openSocket(uri);
 let uploadUrl = uri + "/upload";
 
 class App extends Component {
@@ -182,9 +181,18 @@ class App extends Component {
         this.setState({roomId: event.xhr.response})
     }
 
+    getCookieVal(cookiename)
+    {
+        // Get name followed by anything except a semicolon
+        var cookiestring=RegExp(cookiename+"=[^;]+").exec(document.cookie);
+        // Return everything after the equal sign, or an empty string if the cookie name not found
+        return decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./,"") : "");
+    }
+
     onBeforeUpload(event, url) {
-        event.xhr.open("POST", uploadUrl)
-        event.xhr.setRequestHeader("username", this.state.username)
+        event.xhr.open("POST", uploadUrl);
+        event.xhr.setRequestHeader("username", this.state.username);
+        event.xhr.setRequestHeader("X-XSRF-TOKEN", this.getCookieVal("XSRF-TOKEN"));
         console.log(event);
     }
 

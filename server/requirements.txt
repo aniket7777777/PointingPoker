@@ -1,0 +1,8 @@
+Flask
+Flask-Cors
+Flask-SocketIO
+gevent-websocket
+eventlet
+python-engineio
+python-socketio
+Werkzeug

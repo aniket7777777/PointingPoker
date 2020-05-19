@@ -1,17 +1,14 @@
 import copy
-import copy
 import csv
-import time
-
 import eventlet
-from flask import Flask, render_template, request, json
-from flask_cors import CORS
-from flask_socketio import SocketIO, join_room
-from unidecode import unidecode
-
+import time
+import os
 from Point import Point
 from Pointing import Pointing
 from User import User
+from flask import Flask, render_template, request, json
+from flask_cors import CORS
+from flask_socketio import SocketIO, join_room
 
 eventlet.monkey_patch()
 
@@ -21,6 +18,7 @@ socketio = SocketIO(app, cors_allowed_origins=[], logger=True, engineio_logger=T
 CORS(app)
 pointingData = {}
 current_milli_time = lambda: int(round(time.time() * 1000))
+cf_port = os.getenv('PORT')
 
 
 @app.route('/')
@@ -110,12 +108,7 @@ def utf_8_encoder(unicode_csv_data):
         yield line.encode('utf-8')
 
 
-def remove_non_ascii_chars(text):
-    return unidecode(text.encode(text, encoding="utf-8"))
-    # return ''.join([i if ord(i) < 128 else ' ' for i in text])
-
-
-@app.route('/upload', methods=['POST'])
+@app.route('/file/upload', methods=['POST'])
 def upload_file():
     if request.method == 'POST':
         username = request.headers["Username"]
@@ -151,4 +144,7 @@ def setup_pointing_data(stories, username):
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    if cf_port is None:
+        socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    else:
+        socketio.run(app, host='0.0.0.0', port=int(cf_port), debug=True)
