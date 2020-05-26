@@ -1,0 +1,132 @@
+.pointing-dashboard > div {
+  border-bottom: 1.5px solid black;
+  border-right: 1.5px solid black;
+}
+
+.pointing-dashboard {
+  grid-template-columns: auto 30%;
+  height: 100%;
+  border-top: 1px solid black;
+  border-left: 1px solid black;
+}
+
+.pointing-dashboard .previous {
+  margin-left: auto;
+}
+
+.pointing-dashboard ul.hand {
+  list-style-type: none;
+  padding: 0;
+  position: relative;
+  clear: both;
+  height: 8em;
+  margin: 0 0 1.5em 5%;
+}
+
+.pointing-dashboard ul.hand li {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  float: left;
+  position: absolute;
+  bottom: 0;
+}
+
+.pointing-dashboard ul.hand li:hover {
+  bottom: 1em;
+}
+
+.pointing-dashboard .cardSelect {
+  transform: rotate(20deg);
+  bottom: 40px !important;
+}
+
+.pointing-dashboard .table-holder {
+  overflow: scroll;
+  height: 550px;
+}
+
+.mat-row:hover {
+  background: #eee;
+}
+
+.mat-row.highlighted {
+  background: #999;
+}
+
+.pointing-dashboard .players {
+  height: 384px;
+}
+
+.pointing-dashboard .side-content > div,
+.pointing-dashboard .right-content > div {
+  border-bottom: 1.5px solid black;
+}
+
+.pointing-dashboard .side-content > div:last-child,
+.pointing-dashboard .right-content > div:last-child {
+  border: none;
+}
+
+.pointing-dashboard .story-controls {
+  padding-left: 1em;
+  padding-right: 1em;
+  background-color: #eae8e8;
+  color: #3a3ac9;
+}
+
+.pointing-dashboard .story-controls > div {
+  display: flex;
+  align-items: center;
+}
+
+.pointing-dashboard .story-controls span {
+  color: darkorange;
+  vertical-align: middle;
+}
+
+.pointing-dashboard .story-line > div {
+  border-right: 1.5px solid #a8a5a5;
+  padding: 1em;
+}
+
+.pointing-dashboard .story-line div:last-child {
+  border: none;
+}
+
+.pointing-dashboard .right-content .avg-point {
+  padding: 1em;
+  text-align: center;
+  background: green;
+  color: white;
+}
+
+.pointing-dashboard .right-content .avg-point div:last-child {
+  font-size: 70px;
+}
+
+.pointing-dashboard .right-content .table-selecter {
+  background-color: gray;
+  color: white;
+  text-align: center;
+}
+
+.pointing-dashboard .right-content .table-selecter > div {
+  padding: 1em;
+}
+
+.pointing-dashboard .right-content .final-point input {
+  margin-right: 1em;
+}
+
+.pointing-dashboard .right-content .table-footer {
+  background: darkorange;
+  color: white;
+  text-align: center;
+}
+
+.pointing-dashboard .right-content .table-footer > div {
+  display: flex;
+  padding: 1em;
+  align-items: center;
+}

@@ -1,0 +1,38 @@
+mat-card {
+  width: 90px;
+  height: 120px;
+  border: solid #403a3a;
+}
+
+.orange-card {
+  background-color: darkorange;
+}
+
+.blue-card {
+  background-color: royalblue;
+}
+
+.green-card {
+  background-color: green;
+}
+.gray-card {
+  background-color: gray;
+}
+
+.big-point {
+  text-align: center;
+  margin-top: 15%;
+  color: white;
+}
+
+.small-point {
+  color: white;
+  padding: 5px 0 0 5px;
+  height: 20px;
+}
+
+.name {
+  text-align: center;
+  margin-top: 2px;
+  color: dimgray;
+}

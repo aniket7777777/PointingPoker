@@ -1,0 +1,8 @@
+<mat-card fxLayout="column" [ngClass]="getColorClass()">
+  <div class="small-point">
+    {{isPublic ? point : ''}}
+  </div>
+  <div fxFlex fxFlexAlign="stretch" class="big-point"
+       [style]="{'font-size': point === 'Pass'? 'xx-large' : 'xxx-large'}">{{point}}</div>
+</mat-card>
+<div *ngIf="name != null && name.length>0" class="name">{{name}}</div>

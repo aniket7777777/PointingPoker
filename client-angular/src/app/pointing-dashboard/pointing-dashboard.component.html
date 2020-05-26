@@ -1,0 +1,157 @@
+<div
+  class="pointing-dashboard"
+  gdAreas="header header | side content | footer footer"
+  gdRows="auto auto auto">
+  <div gdArea="header">
+    plannningPoker accesscode : {{roomId}}
+  </div>
+  <div gdArea="side">
+    <div fxLayout="column" class="side-content">
+      <div fxLayout="row" class="story-line title">
+        <div>
+          <div style="text-align: center">Story</div>
+          <div class="xlg-text">{{getSelectedStoryIndex()}}/{{stories != null ? stories.length : 0}}</div>
+        </div>
+        <div fxFlex="70">
+          {{selectedStory != null ? selectedStory.Key + ' : ' + selectedStory.Summary : ''}}
+        </div>
+        <div>Timer</div>
+      </div>
+      <div fxLayout="row" fxFlex fxLayoutGap="1em" class="story-controls title">
+        <div>
+          <span class="material-icons">
+            refresh
+          </span> Reset
+        </div>
+        <div (click)="flipPoints()">
+          <span class="material-icons">
+            gavel
+          </span> Flip Cards
+        </div>
+        <div>
+          <span class="material-icons">
+            format_list_bulleted
+          </span> View Summary
+        </div>
+        <div class="final-point">
+          <mat-form-field>
+            <input matInput [(ngModel)]="finalPoints" placeholder="Enter Final Points">
+          </mat-form-field>
+          <button mat-stroked-button (click)="storyFinalPoints()">Enter</button>
+        </div>
+        <div (click)="exitRoom()">
+          <span class="material-icons">
+            exit_to_app
+          </span> Exit
+        </div>
+        <div (click)="selectPreviousStory()" class="previous">
+          <span class="material-icons">
+            fast_rewind
+            </span> Previous
+        </div>
+        <div (click)="selectNextStory()">
+          Skip <span class="material-icons">
+            fast_forward
+          </span>
+        </div>
+      </div>
+      <div class="players padding-20" fxLayout="row" fxLayoutGap="10px">
+        <!--        <app-pointing-card point="5" isPublic name="Peter J"></app-pointing-card>-->
+        <!--        <app-pointing-card point="?" name="Blake"></app-pointing-card>-->
+        <div *ngFor="let user of currentUsers">
+          <app-pointing-card *ngIf="isStoryPointed(user)"
+                             point="{{displayPoints(user)}}"
+                             name="{{user._name}}"></app-pointing-card>
+        </div>
+      </div>
+      <div fxLayout="column">
+        <div>
+          <ul class="hand">
+            <li *ngFor="let point of points; index as i"
+                [style]="{'left' : selectedPoint === point? getCardPosition(i,1) : getCardPosition(i, 0)}"
+                [class.cardSelect]="selectedPoint === point"
+                (click)="selectPoint(point)">
+              <app-pointing-card point="{{point}}" isPublic="false"></app-pointing-card>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div gdArea="content">
+    <div fxLayout="column" class="right-content">
+      <div class="bold avg-point">
+        <div>Average Point</div>
+        <div>{{calculateAvgPoint()}}</div>
+      </div>
+      <div>velocity</div>
+      <div fxLayout="row" fxLayoutAlign="space-around center" class="bold table-selecter">
+        <div (click)="showStoryTable = false">Players</div>
+        <div (click)="showStoryTable = true">Stories</div>
+        <div>
+          <span class="material-icons">
+            settings
+          </span>
+        </div>
+      </div>
+      <div class="table-holder">
+        <mat-table *ngIf="showStoryTable" [dataSource]="stories">
+
+          <!--- Note that these columns can be defined in any order.
+                The actual rendered columns are set as a property on the row definition" -->
+
+          <!-- Key Column -->
+          <ng-container matColumnDef="Key">
+            <mat-header-cell *matHeaderCellDef> No.</mat-header-cell>
+            <mat-cell *matCellDef="let element"> {{element.Key}} </mat-cell>
+          </ng-container>
+
+          <!-- Summary Column -->
+          <ng-container matColumnDef="Summary">
+            <mat-header-cell *matHeaderCellDef> Summary</mat-header-cell>
+            <mat-cell *matCellDef="let element"> {{element.Summary}} </mat-cell>
+          </ng-container>
+
+          <!-- Story Points Column -->
+          <ng-container matColumnDef="Story Points">
+            <mat-header-cell *matHeaderCellDef> Story Points</mat-header-cell>
+            <mat-cell *matCellDef="let element"> {{element['Story Points']}} </mat-cell>
+          </ng-container>
+
+          <mat-header-row *matHeaderRowDef="displayedStoryColumns; sticky: true"></mat-header-row>
+          <mat-row *matRowDef="let row; columns: displayedStoryColumns;"
+                   (click)="selectStory(row)"
+                   [ngClass]="{highlighted: row.Key === selectedStory.Key}"
+          ></mat-row>
+        </mat-table>
+        <mat-table *ngIf="!showStoryTable" [dataSource]="currentUsers">
+
+          <!--- Note that these columns can be defined in any order.
+                The actual rendered columns are set as a property on the row definition" -->
+
+          <!-- Name Column -->
+          <ng-container matColumnDef="Name">
+            <mat-header-cell *matHeaderCellDef> Name</mat-header-cell>
+            <mat-cell *matCellDef="let element"> {{element._name}} </mat-cell>
+          </ng-container>
+
+          <mat-header-row *matHeaderRowDef="['Name']; sticky: true"></mat-header-row>
+          <mat-row *matRowDef="let row; columns: ['Name'];"></mat-row>
+        </mat-table>
+      </div>
+      <div fxLayout="row" fxLayoutAlign="stretch center" class="table-footer">
+        <div>
+          <span class="material-icons">
+            person_add
+          </span> Invite Players</div>
+        <div>
+          <span (click)="openDialog('Add',{})" class="material-icons">
+            add_circle_outline
+          </span> Add Story</div>
+      </div>
+    </div>
+  </div>
+  <div gdArea="footer">
+    Footer
+  </div>
+</div>

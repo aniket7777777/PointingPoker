@@ -1,1 +1,53 @@
-<p>login works!</p>
+<div fxLayoutAlign="center center" fxFlex>
+  <mat-card fxLayout="row">
+    <div fxFlex="50%">
+      <div class="grey-background-color" fxFlex></div>
+    </div>
+    <div fxFlex>
+      <div fxLayout="column" fxLayoutGap="1em" fxFlex>
+        <form [formGroup]="loginForm" fxLayout="column" fxLayoutGap="1em" fxFlex>
+
+          <mat-form-field appearance="outline">
+            <mat-label> Username</mat-label>
+            <input matInput name="username" formControlName="username" required/>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label> Access code</mat-label>
+            <input matInput name="accessCode" formControlName="accessCode"/>
+          </mat-form-field>
+
+          <div fxLayout="column" fxLayoutGap="1em">
+            <div>
+              <button mat-raised-button class="full-width" color="primary" [disabled]="" (click)="login()"> Join</button>
+            </div>
+          </div>
+
+          <mat-label> Or </mat-label>
+          <mat-label> Create Dashboard </mat-label>
+
+
+          <div>
+            <mat-radio-group aria-label="Select an option" [formControl]="selectedOption">
+              <mat-radio-button value="upload">Upload File</mat-radio-button>
+              <mat-radio-button value="manual">Enter Stories Manually</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <div>
+            <input #csvInput hidden="true" type="file" (change)="fileChange($event)" accept=".csv"/>
+            <button mat-flat-button color="primary" (click)="csvInput.click()">Choose Spreadsheet File (CSV)</button>
+          </div>
+
+          <div fxLayout="column" fxLayoutGap="1em">
+            <div>
+              <button mat-raised-button class="full-width" color="primary" (click)="upload()" [disabled]=""> Upload</button>
+              <span>&nbsp;</span>
+              <button mat-raised-button class="full-width" color="primary" [disabled]="" (click)="login()"> Create</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </mat-card>
+</div>
