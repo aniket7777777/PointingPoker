@@ -138,7 +138,8 @@ class App extends Component {
         socket.on('selectStoryResp', (data) => {
             this.setState({
                 selectedStory: data,
-                progressSpinner: false
+                progressSpinner: false,
+                selectedPoint: ''
             });
         })
 
@@ -445,10 +446,11 @@ class App extends Component {
                 {this.showStoryTableSection()}
             </div>
             <div className="footer">
-                <SelectButton value={this.state.selectedPoint} options={this.state.points}
-                              onChange={e => this.selectPoint(e.value)} itemTemplate={this.cardTemplate}
-                              optionLabel="label" optionValue="key"/>
-            </div>
+                <SelectButton value={this.state.selectedPoint}
+                              options={this.state.points}
+                              onChange={e => this.selectPoint(e.value)}
+                              itemTemplate={this.cardTemplate}
+                              optionLabel="label" optionValue="key"/></div>
         </div>
     )
 

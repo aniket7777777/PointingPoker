@@ -104,7 +104,7 @@ body {
     width: 64px;
     border-radius: 50%;
     overflow: hidden;
-    border: solid darkgray;
+    border: 1px solid darkgray;
 }
 
 .account__name {
@@ -337,7 +337,7 @@ body {
 .footer {
     grid-area: footer;
     background: white;
-    height: 100px;
+    height: 107px;
     position: sticky;
     bottom: 0;
 }
