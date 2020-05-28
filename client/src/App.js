@@ -23,11 +23,14 @@ import {Column} from "primereact/column";
 import {Button} from "primereact/button";
 import {InputText} from "primereact/inputtext";
 
+//uncomment this to run on cf
 // const socketUri = 'wss://';
-const socketUri = 'ws://localhost:5000';
 // let uri = '/file';
+
+//uncomment this to run on local
+const socketUri = 'ws://localhost:5000';
 let uri = 'http://localhost:5000/file';
-// const socket = io(uri);
+
 const socket = io.connect(socketUri, {transports: ['websocket'], path: '/backend'});
 let uploadUrl = uri + "/upload";
 
@@ -117,7 +120,7 @@ class App extends Component {
 
     setSocketListeners() {
         socket.on('message', (data) => {
-            console.log(data.message)
+            // console.log(data.message)
         });
 
         socket.on('greet', (data) => {
@@ -125,7 +128,7 @@ class App extends Component {
         })
 
         socket.on('pointingData', (data) => {
-            console.log(data);
+            // console.log(data);
             let pointingData = JSON.parse(data);
             this.setState({
                 stories: Object.values(pointingData['_stories']),
@@ -144,12 +147,12 @@ class App extends Component {
         })
 
         socket.on('publishUsers', (data) => {
-            console.log("publishUsers", data);
+            // console.log("publishUsers", data);
             this.setState({currentUsers: Object.values(JSON.parse(data))});
         })
 
         socket.on('publishStories', (data) => {
-            console.log("publishStories", data);
+            // console.log("publishStories", data);
             this.setState({stories: Object.values(JSON.parse(data))});
         })
 
@@ -194,7 +197,7 @@ class App extends Component {
         event.xhr.open("POST", uploadUrl);
         event.xhr.setRequestHeader("username", this.state.username);
         event.xhr.setRequestHeader("X-XSRF-TOKEN", this.getCookieVal("XSRF-TOKEN"));
-        console.log(event);
+        // console.log(event);
     }
 
     onUploadError(event) {
