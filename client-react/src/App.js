@@ -245,6 +245,7 @@ class App extends Component {
                                  onChange={(e) => this.setState({selectedOption: e.value})}
                                  checked={this.state.selectedOption === 'upload'}/><label
                     className="p-radiobutton-label">Upload File</label>
+                    <span><i className="pi pi-info-circle" title=".csv format with columns as Key,Summary,Story Points"></i></span>
                     <br/>
                     <RadioButton value="manual" name="create"
                                  onChange={(e) => this.setState({selectedOption: e.value})}

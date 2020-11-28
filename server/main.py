@@ -127,11 +127,12 @@ def upload_file():
     if request.method == 'POST':
         username = request.headers["Username"]
         print(username + ' logged in')
-        csv_contents = request.files['upload'].read().decode('utf-8', errors='replace')
+        csv_contents = request.files['upload'].read().decode('utf-8-sig', errors='replace')
         request_file = csv_contents.splitlines()
         dict_reader = csv.DictReader(request_file)
         stories = {}
         for item in dict_reader:
+            print(item)
             stories[item['Key']] = {}
             stories[item['Key']]['Key'] = item['Key']
             stories[item['Key']]['Summary'] = item['Summary']
